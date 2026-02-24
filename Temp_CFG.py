@@ -27,7 +27,6 @@ Random Variables (RV / Statistics)
      Controls how many times CITY -> STACK CITY is applied vs CITY -> STACK
 2) height(stack)  ~ UniformInt(min_height, max_height)
      Controls how many times COLUMN -> CUBE COLUMN is applied vs COLUMN -> CUBE
-3) grid_position  ~ Uniform among free cells (no overlap)
 4) dominant_color ~ Uniform choice from {R, G, B}
 5) color_per_cube given dominant_color:
      P(dominant) = dominant_prob
@@ -35,18 +34,13 @@ Random Variables (RV / Statistics)
 """
 
 from __future__ import annotations
-import json
 import random
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict
 
 
 # ============================================================
 # Formal CFG Definition
 # ============================================================
-# Production rules stored as a dictionary.
-# Each non-terminal maps to a list of possible productions.
-# Each production is a list of symbols (strings).
 
 CFG_RULES: Dict[str, List[List[str]]] = {
     "CITY":   [["STACK", "CITY"],   # recursive: add another stack
@@ -64,20 +58,9 @@ START_SYMBOL = "CITY"
 
 
 # ============================================================
-# Data structure for output
-# ============================================================
-@dataclass
-class Stack:
-    x: int
-    z: int
-    height: int
-    dominant_color: str      # which color was biased for this stack
-    colors: List[str]        # bottom -> top
-
-
-# ============================================================
 # Random Variable Helpers
 # ============================================================
+
 def choose_dominant_color() -> str:
     """RV4: dominant color ~ Uniform({R, G, B})"""
     return random.choice(["R", "G", "B"])
@@ -100,6 +83,7 @@ def choose_cube_color(dominant: str, dominant_prob: float = 0.7) -> str:
 # ============================================================
 # CFG Expansion Engine
 # ============================================================
+
 def expand_city(num_stacks: int) -> int:
     """
     Expand CITY using the grammar rules.
@@ -220,96 +204,3 @@ def log_derivation_example(num_stacks: int, height: int, dominant: str,
     lines.append(f"  Apply CUBE -> color:  {' '.join(final)}")
 
     return "\n".join(lines)
-
-
-# ============================================================
-# Grid Placement (no overlap) — RV3
-# ============================================================
-def generate_unique_positions(grid_w: int, grid_d: int, count: int) -> List[Tuple[int, int]]:
-    """
-    RV3: grid_position ~ Uniform among free cells.
-    Picks unique (x, z) cells from the grid so stacks don't overlap.
-    """
-    all_cells = [(x, z) for x in range(grid_w) for z in range(grid_d)]
-    random.shuffle(all_cells)
-    count = min(count, grid_w * grid_d)
-    return all_cells[:count]
-
-
-# ============================================================
-# Main Generator — Drives CFG Expansion with RVs
-# ============================================================
-def generate_city(
-    grid_w: int = 10,
-    grid_d: int = 10,
-    min_stacks: int = 20,
-    max_stacks: int = 50,
-    min_height: int = 1,
-    max_height: int = 10,
-    dominant_prob: float = 0.7,
-    seed: Optional[int] = None,
-) -> List[Dict]:
-    """
-    Generates a CITY by expanding the CFG with random variables.
-
-    Pipeline:
-      1. RV1 decides num_stacks  -> controls CITY expansion
-      2. RV3 picks grid positions -> unique (x,z) per stack
-      3. For each STACK:
-         a. RV2 decides height   -> controls COLUMN expansion
-         b. RV4 picks dominant   -> biases CUBE expansion
-         c. RV5 picks each color -> expands CUBE -> R|G|B
-    """
-    if seed is not None:
-        random.seed(seed)
-
-    # RV1: how many stacks
-    num_stacks = random.randint(min_stacks, max_stacks)
-
-    # Verify CFG expansion produces correct count
-    expanded_count = expand_city(num_stacks)
-    assert expanded_count == num_stacks, "CFG expansion mismatch!"
-
-    # RV3: grid positions
-    positions = generate_unique_positions(grid_w, grid_d, num_stacks)
-
-    # Expand each STACK via CFG
-    stacks: List[Stack] = []
-    for (x, z) in positions:
-        h = random.randint(min_height, max_height)    # RV2
-        dom = choose_dominant_color()                   # RV4
-        colors = expand_column(h, dom, dominant_prob)   # RV5 via CFG expansion
-        stacks.append(Stack(x=x, z=z, height=h, dominant_color=dom, colors=colors))
-
-    return [asdict(s) for s in stacks]
-
-
-def save_city_to_json(filepath: str = "city_output.json", **kwargs) -> str:
-    """Generate city and save to JSON."""
-    data = generate_city(**kwargs)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    return filepath
-
-
-# ============================================================
-# Quick test / demo
-# ============================================================
-if __name__ == "__main__":
-    city = generate_city(seed=42)
-    print(f"Generated {len(city)} stacks\n")
-
-    # Show first 3 stacks
-    for i, s in enumerate(city[:3]):
-        print(f"Stack {i}: pos=({s['x']},{s['z']})  h={s['height']}  "
-              f"dominant={s['dominant_color']}  colors={s['colors']}")
-
-    # Show a derivation trace
-    print()
-    random.seed(42)
-    trace = log_derivation_example(num_stacks=4, height=3, dominant="B", dominant_prob=0.7)
-    print(trace)
-
-    # Save output
-    save_city_to_json("city_output.json", seed=42)
-    print("\nSaved: city_output.json")
