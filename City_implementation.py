@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from typing import List
-from Temp_CFg import choose_dominant_color, expand_column
+from Temp_CFG import choose_dominant_color, expand_column
 
 # just simple buildings
 Color = str
