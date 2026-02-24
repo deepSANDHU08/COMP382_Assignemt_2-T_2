@@ -100,25 +100,3 @@ def inspect_cell(city: City, x: int, y: int) -> None:
         print(f"Cell ({x},{y}) height={len(stack)} colors={stack}.")
 
 
-# REMEMBER TO MAKE A TEMPORARY MAIN HERE FOR TESTING
-def main() -> None:
-    params = CityParams(
-        seed=123,
-        empty_prob=0.35,
-        min_height=2,
-        max_height=8,
-        dominant_prob=0.70,
-    )
-
-    city = generate_city(width=12, height=8, params=params)
-
-    print_height_map(city)
-
-    print("\nChecking a few cells:")
-    inspect_cell(city, 0, 0)
-    inspect_cell(city, 5, 3)
-    inspect_cell(city, 11, 7)
-
-
-if __name__ == "__main__":
-    main()
