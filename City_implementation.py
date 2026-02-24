@@ -21,21 +21,22 @@ class CityParams:
     min_height: int = 1
     max_height: int = 7
 
+    # probability that cube matches dominant color (RV5)
+    dominant_prob: float = 0.70
+
 
 # Randomize the color for now.
-# need to connect with cfg file and probabilities later.
+# Will chnage this later. we do't need it
 def random_color(rng: random.Random) -> Color:
     return rng.choice(["R", "G", "B"])
 
 
-def make_stack(rng: random.Random, params) -> list[str]:
+def make_stack(rng: random.Random, params) -> List[str]:
     """
     Implementation-side stack builder that uses the CFG module.
 
-    Needs in params:
-      - min_height
-      - max_height
-      - dominant_prob
+    Height is chosen here (RV2).
+    Dominant color + cube colors come from Temp_CFG.py (RV4 + RV5).
     """
     # RV2: choose stack height
     height = rng.randint(params.min_height, params.max_height)
@@ -60,6 +61,7 @@ def generate_city(width: int, height: int, params: CityParams) -> City:
     """
     rng = random.Random(params.seed)
     city: City = []
+
     for _y in range(height):
         row: List[Stack] = []
         for _x in range(width):
@@ -69,6 +71,7 @@ def generate_city(width: int, height: int, params: CityParams) -> City:
             else:
                 row.append(make_stack(rng, params))
         city.append(row)
+
     return city
 
 
@@ -78,14 +81,12 @@ def print_height_map(city: City) -> None:
 
     for row in city:
         line = []
-
         for stack in row:
             h = len(stack)
             if h == 0:
                 line.append(".")
             else:
                 line.append(str(min(h, 9)))  # cap display at 9
-
         print(" ".join(line))
 
 
@@ -106,6 +107,7 @@ def main() -> None:
         empty_prob=0.35,
         min_height=2,
         max_height=8,
+        dominant_prob=0.70,
     )
 
     city = generate_city(width=12, height=8, params=params)
