@@ -42,11 +42,70 @@ def make_stack(rng: random.Random, params: CityParams) -> Satck:
 ## syntax errors fixed remember the intedentation for next time
 
 def generate_city(width: int, height: int, params: CityParams) -> City:
-   # nested for loops for range in height and range in width
-   # try to do it 3D, brains stroms some idea.
+   """
+   Generates a simple grid.
 
-def print_height_map():
-   # this one is for visulization
+   Each cell:
+    - empty lot OR
+    - building stack
+   """
+   rng = random.Random(params.seed)
+   city: City = []
+   for y in range(height):
+      row = []
+      for x in range(width):
+         # decide if this spot stays the empty
+         if rng.random() < params.empty_prob:
+            row.append([])
+         else:
+          row.append(make_stack(rng, parmas))
+      city.append(row)
+   return city
+
+#simple visualization 
+def print_height_map(city: City):
+    print("\nCity height map:\n")
+
+    for row in city:
+        line = []
+
+        for stack in row:
+            h = len(stack)
+            if h == 0:
+                line.append(".")
+            else:
+                line.append(str(min(h, 9)))  # cap display at 9
+
+        print(" ".join(line))
+
+# inspect for debugginh 
+def inspect_cell(city: City, x: int, y: int):
+   stack = city[y][x]
+
+   if not stack:
+      print(f"Cell ({x},{y}) is empty.")
+   else:
+      print(f"Cell ({x},{y}) height={;en(stack)} colors={stack}.")
+      
 
 # REMEMBER TO MAKE A TEMPORARY MAIN HERE FOR TESTING 
-# THINK ABOUT RANDOM VARAIBLES AND PROPBABBILIES OF COLORS
+def main():
+    params = CityParams(
+        seed=123,
+        empty_prob=0.35,
+        min_height=2,
+        max_height=8
+    )
+
+    city = generate_city(width=12, height=8, params=params)
+
+    print_height_map(city)
+
+    print("\nChecking a few cells:")
+    inspect_cell(city, 0, 0)
+    inspect_cell(city, 5, 3)
+    inspect_cell(city, 11, 7)
+
+
+if __name__ == "__main__":
+    main()
