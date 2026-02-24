@@ -1,6 +1,7 @@
 import random
 from dataclasses import dataclass
 from typing import List
+from Temp_CFg import choose_dominant_color, expand_column
 
 # just simple buildings
 Color = str
@@ -27,20 +28,25 @@ def random_color(rng: random.Random) -> Color:
     return rng.choice(["R", "G", "B"])
 
 
-def make_stack(rng: random.Random, params: CityParams) -> Stack:
+def make_stack(rng: random.Random, params) -> list[str]:
     """
-    Creates one building stack.
+    Implementation-side stack builder that uses the CFG module.
 
-    Height is random between min_height and max_height,
-    then we fill it with random cube colors.
+    Needs in params:
+      - min_height
+      - max_height
+      - dominant_prob
     """
+    # RV2: choose stack height
     height = rng.randint(params.min_height, params.max_height)
 
-    stack: Stack = []
-    for _ in range(height):
-        stack.append(random_color(rng))
+    # RV4: choose dominant color
+    dominant = choose_dominant_color()
 
-    return stack
+    # CFG + RV5: expand COLUMN into cube colors (bottom -> top)
+    colors = expand_column(height, dominant, params.dominant_prob)
+
+    return colors
 
 
 # syntax errors fixed remember the indentation for next time
