@@ -117,3 +117,9 @@ You can tweak the city by changing the parameters in `main.py` or in the GUI pan
 - Python 3
 - PySide6 (GUI)
 - matplotlib + numpy (3D visualization)
+
+## Bibliography / Acknowledgements
+
+- OpenAI Codex was used to help design and implement the Python GUI (`gui.py`) and related setup files.
+- Anthropic AI was used to better understand context-free grammar (CFG) concepts during development.
+- Sipser, Michael. *Introduction to the Theory of Computation* (3rd Edition) was used as a textbook reference for formal language and CFG ideas.
