@@ -2,13 +2,12 @@ from City_implementation import CityParams, generate_city, print_height_map
 
 
 def main():
-    # basic parameters for the city
     params = CityParams(
-        seed=123,
-        empty_prob=0.35,
-        min_height=2,
-        max_height=8,
-        dominant_prob=0.70
+        seed=999,             
+        empty_prob=0.15,      
+        min_height=3,         
+        max_height=12,        
+        dominant_prob=0.80    
     )
 
     # generate city grid
