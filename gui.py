@@ -602,6 +602,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.city_b: Optional[CityResult] = None
         self.selected_cell: Optional[Tuple[int, int]] = None
         self._thread: Optional[QtCore.QThread] = None
+        self._worker: Optional[CityGenWorker] = None
         self._is_generating: bool = False
 
         self._build_ui()
@@ -838,7 +839,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._is_generating = True
 
         self._thread = QtCore.QThread(self)
-        worker = CityGenWorker(
+        self._worker = CityGenWorker(
             adapter=self.adapter,
             width=self.width_spin.value(),
             height=self.height_spin.value(),
@@ -848,32 +849,34 @@ class MainWindow(QtWidgets.QMainWindow):
             empty_prob=self.empty_prob.value(),
             dominant_prob=self.dom_prob.value(),
         )
-        worker.moveToThread(self._thread)
-        self._thread.started.connect(worker.run)
-
-        def on_done(result: Any, error: str) -> None:
-            self.generate_btn.setEnabled(True)
-            self.demo_btn.setEnabled(True)
-            self._is_generating = False
-            if error:
-                self._show_error("Generation failed", error)
-                self.status_label.setText("Generation failed")
-            else:
-                self.city_a = result
-                self.view_a.set_city(result)
-                self.view_a.title_label.setText(f"Seed A ({self.seed_spin.value()})")
-                self.status_label.setText(f"Generated with {self.adapter.debug_source or 'detected module'}")
-
-                if self.compare_chk.isChecked():
-                    self._generate_b_sync()
-
-            worker.deleteLater()
-            if self._thread:
-                self._thread.quit()
-                self._thread.wait()
-
-        worker.finished.connect(on_done)
+        self._worker.moveToThread(self._thread)
+        self._thread.started.connect(self._worker.run)
+        self._worker.finished.connect(self._handle_generation_finished)
+        self._worker.finished.connect(self._thread.quit)
+        self._worker.finished.connect(self._worker.deleteLater)
+        self._thread.finished.connect(self._thread.deleteLater)
         self._thread.start()
+
+    @QtCore.Slot(object, str)
+    def _handle_generation_finished(self, result: Any, error: str) -> None:
+        self.generate_btn.setEnabled(True)
+        self.demo_btn.setEnabled(True)
+        self._is_generating = False
+
+        if error:
+            self._show_error("Generation failed", error)
+            self.status_label.setText("Generation failed")
+        else:
+            self.city_a = result
+            self.view_a.set_city(result)
+            self.view_a.title_label.setText(f"Seed A ({self.seed_spin.value()})")
+            self.status_label.setText(f"Generated with {self.adapter.debug_source or 'detected module'}")
+
+            if self.compare_chk.isChecked():
+                self._generate_b_sync()
+
+        self._worker = None
+        self._thread = None
 
     def _generate_b_sync(self) -> None:
         try:

@@ -2,6 +2,7 @@ import random
 from dataclasses import dataclass
 from typing import List
 from Temp_CFG import choose_dominant_color, expand_column
+import json
 
 # just simple buildings
 Color = str
@@ -100,3 +101,25 @@ def inspect_cell(city: City, x: int, y: int) -> None:
         print(f"Cell ({x},{y}) height={len(stack)} colors={stack}.")
 
 
+# for the json output
+def export_to_json(city: City, filepath: str = "city_output.json") -> None:
+    """
+    Converts grid city[y][x] into a Blender-friendly cube list
+    and automatically writes a JSON file.
+    """
+    cubes = []
+
+    for y, row in enumerate(city):
+        for x, stack in enumerate(row):
+            for z, color in enumerate(stack):
+                cubes.append(
+                    {
+                        "x": x,
+                        "y": y,
+                        "z": z,
+                        "color": color,
+                    }
+                )
+
+    with open(filepath, "w", encoding="utf-8") as file:
+        json.dump(cubes, file, indent=2)
